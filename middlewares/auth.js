@@ -1,4 +1,4 @@
-const { verifyToken } = require("../jwt"); // Ensure correct path to jwt.js
+const { verifyToken } = require("./jwt/jwt"); // Ensure correct path to jwt.js
 
 const authenticateJWT = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
