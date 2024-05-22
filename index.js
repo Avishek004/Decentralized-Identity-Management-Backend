@@ -4,6 +4,8 @@ const bodyParser = require("body-parser");
 const fs = require("fs-extra");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
+const { generateToken } = require("./jwt");
+const authenticateJWT = require("./middlewares/auth");
 
 require("dotenv").config();
 
@@ -92,7 +94,8 @@ app.post("/login", async (req, res) => {
     console.log("log in Final Hash", finalHash);
 
     if (finalHash === storedHash) {
-      res.status(200).send("User logged in successfully");
+      const token = generateToken({ username, address });
+      res.status(200).send({ message: "User logged in successfully", token });
     } else {
       res.status(401).send("Invalid credentials");
     }
@@ -100,6 +103,11 @@ app.post("/login", async (req, res) => {
     console.error(error);
     res.status(500).send("Error logging in user");
   }
+});
+
+// Example of a protected route
+app.get("/protected", authenticateJWT, (req, res) => {
+  res.send("This is a protected route. Your username is " + req.user.username);
 });
 
 app.listen(port, "0.0.0.0", () => {
