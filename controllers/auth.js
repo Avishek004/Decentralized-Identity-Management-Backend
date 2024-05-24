@@ -32,7 +32,7 @@ exports.signup = async (req, res) => {
 
     const accounts = await web3.eth.getAccounts();
     // console.log("accounts", accounts);
-    await UserStorage.methods.storeUserHash(address, finalHash).send({
+    await UserStorage.methods.storeUser(address, finalHash).send({
       from: accounts[0],
       gas: 150000,
       gasPrice: "30000000000",
@@ -49,8 +49,16 @@ exports.login = async (req, res) => {
   try {
     const { username, password, address, signature } = req.body;
 
-    const storedHash = await UserStorage.methods.getUserHash(address).call();
-    console.log("storedHash", storedHash);
+    // Check if the user is registered
+    const isRegistered = await UserStorage.methods.isRegistered(address).call();
+    if (!isRegistered) {
+      return res.status(404).send("User not found");
+    }
+
+    // Fetch stored user data
+    const storedUser = await UserStorage.methods.getUser(address).call();
+    const storedHash = storedUser.userHash;
+
     if (!storedHash) {
       return res.status(404).send("User not found");
     }
@@ -66,10 +74,94 @@ exports.login = async (req, res) => {
       const token = generateToken({ username, address });
       res.status(200).send({ message: "User logged in successfully", token });
     } else {
-      res.status(401).send("Invalid credentials");
+      res.status(400).send({ message: "Invalid credentials, Please try again.." });
     }
   } catch (error) {
     console.error(error);
     res.status(500).send("Error logging in user");
+  }
+};
+
+exports.updateUserInfo = async (req, res) => {
+  try {
+    const { firstName, lastName, picture, addressInfo, number } = req.body;
+    const { address } = req.user;
+
+    if (!web3.utils.toChecksumAddress(address)) {
+      return res.status(400).send("Invalid address");
+    }
+
+    const storedUser = await UserStorage.methods.getUser(address).call();
+    if (!storedUser.userHash) {
+      return res.status(404).send("User not found");
+    }
+
+    const accounts = await web3.eth.getAccounts();
+    await UserStorage.methods.updateUser(address, firstName, lastName, picture, addressInfo, number).send({
+      from: accounts[0],
+      gas: 150000,
+      gasPrice: "30000000000",
+    });
+
+    res.status(200).send("User information updated successfully");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Error updating user information");
+  }
+};
+
+exports.loginWithMetamask = async (req, res) => {
+  try {
+    const { address, signature, nonce } = req.body;
+
+    if (!web3.utils.toChecksumAddress(address)) {
+      return res.status(400).send("Invalid address");
+    }
+
+    const storedUser = await UserStorage.methods.getUser(address).call();
+    if (!storedUser.userHash) {
+      return res.status(404).send("User not found");
+    }
+
+    const recoveredAddress = web3.eth.accounts.recover(nonce, signature);
+    if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
+      return res.status(400).send("Invalid signature");
+    }
+
+    const token = generateToken({ address });
+    res.status(200).send({ message: "User logged in successfully", token });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Error logging in user");
+  }
+};
+
+exports.getUserInfo = async (req, res) => {
+  try {
+    const { address } = req.user;
+
+    if (!web3.utils.toChecksumAddress(address)) {
+      return res.status(400).send("Invalid address");
+    }
+
+    const storedUser = await UserStorage.methods.getUser(address).call();
+    if (!storedUser.userHash) {
+      return res.status(404).send("User not found");
+    }
+
+    const { username, firstName, lastName, picture, addressInfo, number } = storedUser;
+
+    res.status(200).send({
+      username,
+      address,
+      firstName,
+      lastName,
+      picture,
+      addressInfo,
+      number,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Error fetching user information");
   }
 };

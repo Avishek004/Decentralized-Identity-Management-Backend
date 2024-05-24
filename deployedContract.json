@@ -1,9 +1,9 @@
 {
-  "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
   "abi": [
     {
       "type": "function",
-      "name": "getUserHash",
+      "name": "getUser",
       "constant": true,
       "stateMutability": "view",
       "payable": false,
@@ -15,14 +15,59 @@
       ],
       "outputs": [
         {
-          "type": "bytes32",
+          "type": "tuple",
+          "name": "",
+          "components": [
+            {
+              "type": "bytes32",
+              "name": "userHash"
+            },
+            {
+              "type": "string",
+              "name": "firstName"
+            },
+            {
+              "type": "string",
+              "name": "lastName"
+            },
+            {
+              "type": "string",
+              "name": "picture"
+            },
+            {
+              "type": "string",
+              "name": "addressInfo"
+            },
+            {
+              "type": "string",
+              "name": "number"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "isRegistered",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "user"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "bool",
           "name": ""
         }
       ]
     },
     {
       "type": "function",
-      "name": "storeUserHash",
+      "name": "storeUser",
       "constant": false,
       "payable": false,
       "inputs": [
@@ -33,6 +78,39 @@
         {
           "type": "bytes32",
           "name": "userHash"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "updateUser",
+      "constant": false,
+      "payable": false,
+      "inputs": [
+        {
+          "type": "address",
+          "name": "user"
+        },
+        {
+          "type": "string",
+          "name": "firstName"
+        },
+        {
+          "type": "string",
+          "name": "lastName"
+        },
+        {
+          "type": "string",
+          "name": "picture"
+        },
+        {
+          "type": "string",
+          "name": "addressInfo"
+        },
+        {
+          "type": "string",
+          "name": "number"
         }
       ],
       "outputs": []
