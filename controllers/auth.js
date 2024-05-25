@@ -165,3 +165,7 @@ exports.getUserInfo = async (req, res) => {
     res.status(500).send("Error fetching user information");
   }
 };
+
+exports.authenticate = async (req, res) => {
+  res.status(200).send({ message: "Authenticated", user: req.user });
+};
