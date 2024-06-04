@@ -9,7 +9,7 @@ const authenticateJWT = (req, res, next) => {
       req.user = decoded;
       next();
     } else {
-      res.status(400).send("Invalid token");
+      res.status(401).send("Invalid token");
     }
   } else {
     res.status(401).send("Token required");
