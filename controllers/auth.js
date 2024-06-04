@@ -1,11 +1,18 @@
 const bcrypt = require("bcrypt");
+const { randomBytes } = require("node:crypto");
 const web3 = require("../web3-Instance");
 const UserStorage = require("../user-storage");
 const { generateToken } = require("../middlewares/jwt/jwt");
 
+exports.getNonce = async (req, res) => {
+  const nonce = randomBytes(32).toString("hex");
+
+  res.json({ nonce });
+};
+
 exports.signup = async (req, res) => {
   try {
-    const { signature, username, password, address } = req.body;
+    const { signature, username, password, address, nonce } = req.body;
     console.log("sign up username", username);
     console.log("sign up password", password);
     console.log("sign up address", address);
@@ -15,15 +22,21 @@ exports.signup = async (req, res) => {
       return res.status(400).send("Invalid address");
     }
 
+    // Check if user is already registered
+    const isRegistered = await UserStorage.methods.isRegistered(address).call();
+    if (isRegistered) {
+      return res.status(400).send("User already exists");
+    }
+
     // Recover the address from the signature
-    const recoveredAddress = web3.eth.accounts.recover(username, signature);
+    const recoveredAddress = web3.eth.accounts.recover(nonce, signature);
     console.log("Recovered Address", recoveredAddress);
 
     if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
       return res.status(400).send("Invalid signature");
     }
 
-    const hash1 = web3.utils.sha3(signature);
+    const hash1 = web3.utils.sha3(username);
     console.log("sign up hash1", hash1);
     const hash2 = bcrypt.hashSync(password, process.env.STATIC_SALT);
     console.log("sign up hash2", hash2);
@@ -34,20 +47,21 @@ exports.signup = async (req, res) => {
     // console.log("accounts", accounts);
     await UserStorage.methods.storeUser(address, finalHash).send({
       from: accounts[0],
-      gas: 150000,
-      gasPrice: "30000000000",
     });
 
     res.status(200).send("User registered successfully");
   } catch (error) {
-    console.error(error);
+    console.log(error);
+    if (error.message.includes("User already exists")) {
+      return res.status(400).send("User Already Exists...");
+    }
     res.status(500).send("Error registering user");
   }
 };
 
 exports.login = async (req, res) => {
   try {
-    const { username, password, address, signature } = req.body;
+    const { username, password, address, signature, nonce } = req.body;
 
     // Check if the user is registered
     const isRegistered = await UserStorage.methods.isRegistered(address).call();
@@ -63,7 +77,15 @@ exports.login = async (req, res) => {
       return res.status(404).send("User not found");
     }
 
-    const hash1 = web3.utils.sha3(signature);
+    // Recover the address from the signature
+    const recoveredAddress = web3.eth.accounts.recover(nonce, signature);
+    console.log("Recovered Address", recoveredAddress);
+
+    if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
+      return res.status(400).send("Invalid signature");
+    }
+
+    const hash1 = web3.utils.sha3(username);
     console.log("log in hash1", hash1);
     const hash2 = bcrypt.hashSync(password, process.env.STATIC_SALT);
     console.log("log in hash2", hash2);
@@ -84,7 +106,7 @@ exports.login = async (req, res) => {
 
 exports.updateUserInfo = async (req, res) => {
   try {
-    const { firstName, lastName, picture, addressInfo, number } = req.body;
+    const { firstName, lastName, image, addressInfo, number } = req.body;
     const { address } = req.user;
 
     if (!web3.utils.toChecksumAddress(address)) {
@@ -96,11 +118,12 @@ exports.updateUserInfo = async (req, res) => {
       return res.status(404).send("User not found");
     }
 
+    // Generate hash for additional user information
+    const userInfoHash = web3.utils.sha3(JSON.stringify({ firstName, lastName, image, addressInfo, number }));
+
     const accounts = await web3.eth.getAccounts();
-    await UserStorage.methods.updateUser(address, firstName, lastName, picture, addressInfo, number).send({
+    await UserStorage.methods.updateUser(address, userInfoHash).send({
       from: accounts[0],
-      gas: 150000,
-      gasPrice: "30000000000",
     });
 
     res.status(200).send("User information updated successfully");
@@ -149,17 +172,12 @@ exports.getUserInfo = async (req, res) => {
       return res.status(404).send("User not found");
     }
 
-    const { username, firstName, lastName, picture, addressInfo, number } = storedUser;
+    const userInfoHash = storedUser.userInfoHash;
 
-    res.status(200).send({
-      username,
-      address,
-      firstName,
-      lastName,
-      picture,
-      addressInfo,
-      number,
-    });
+    // Decode userInfoHash to retrieve individual fields
+    const userInfo = JSON.parse(web3.utils.hexToUtf8(userInfoHash));
+
+    res.status(200).send(userInfo);
   } catch (error) {
     console.error(error);
     res.status(500).send("Error fetching user information");

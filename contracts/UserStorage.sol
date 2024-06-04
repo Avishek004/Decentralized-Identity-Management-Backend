@@ -4,11 +4,7 @@ pragma solidity ^0.8.0;
 contract UserStorage {
     struct User {
         bytes32 userHash;
-        string firstName;
-        string lastName;
-        string picture;
-        string addressInfo;
-        string number;
+        bytes32 userInfoHash;
     }
 
     mapping(address => User) private users;
@@ -19,25 +15,16 @@ contract UserStorage {
         bytes32 userHash
     ) public {
         require(!registered[user], "User already exists");
-        users[user].userHash = userHash;
+        users[user].userHash = userHash; // Store userInfoHash
         registered[user] = true;
     }
 
     function updateUser(
         address user,
-        string memory firstName,
-        string memory lastName,
-        string memory picture,
-        string memory addressInfo,
-        string memory number
+        bytes32 userInfoHash // Update with userInfoHash only
     ) public {
         require(registered[user], "User does not exist");
-        User storage userInfo = users[user];
-        userInfo.firstName = firstName;
-        userInfo.lastName = lastName;
-        userInfo.picture = picture;
-        userInfo.addressInfo = addressInfo;
-        userInfo.number = number;
+        users[user].userInfoHash = userInfoHash; // Update userInfoHash
     }
 
     function getUser(address user) public view returns (User memory) {

@@ -3,8 +3,9 @@ const express = require("express");
 const router = express.Router();
 
 const authenticateJWT = require("../middlewares/auth");
-const { signup, login, updateUserInfo, getUserInfo, authenticate, loginWithMetamask } = require("../controllers/auth");
+const { signup, login, updateUserInfo, getUserInfo, authenticate, loginWithMetamask, getNonce } = require("../controllers/auth");
 
+router.get("/get-nonce", getNonce);
 router.post("/signup", signup);
 router.post("/login", login);
 router.post("/login-with-metamask", loginWithMetamask);
