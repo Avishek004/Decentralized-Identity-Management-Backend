@@ -118,11 +118,8 @@ exports.updateUserInfo = async (req, res) => {
       return res.status(404).send("User not found");
     }
 
-    // Generate hash for additional user information
-    const userInfoHash = web3.utils.sha3(JSON.stringify({ firstName, lastName, image, addressInfo, number }));
-
     const accounts = await web3.eth.getAccounts();
-    await UserStorage.methods.updateUser(address, userInfoHash).send({
+    await UserStorage.methods.updateUser(address, firstName, lastName, image, addressInfo, number).send({
       from: accounts[0],
     });
 
@@ -172,12 +169,16 @@ exports.getUserInfo = async (req, res) => {
       return res.status(404).send("User not found");
     }
 
-    const userInfoHash = storedUser.userInfoHash;
+    const { firstName, lastName, image, addressInfo, number } = storedUser;
 
-    // Decode userInfoHash to retrieve individual fields
-    const userInfo = JSON.parse(web3.utils.hexToUtf8(userInfoHash));
-
-    res.status(200).send(userInfo);
+    res.status(200).send({
+      address,
+      firstName,
+      lastName,
+      image,
+      addressInfo,
+      number,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send("Error fetching user information");

@@ -23,8 +23,24 @@
               "name": "userHash"
             },
             {
-              "type": "bytes32",
-              "name": "userInfoHash"
+              "type": "string",
+              "name": "firstName"
+            },
+            {
+              "type": "string",
+              "name": "lastName"
+            },
+            {
+              "type": "string",
+              "name": "image"
+            },
+            {
+              "type": "string",
+              "name": "addressInfo"
+            },
+            {
+              "type": "string",
+              "name": "number"
             }
           ]
         }
@@ -77,8 +93,24 @@
           "name": "user"
         },
         {
-          "type": "bytes32",
-          "name": "userInfoHash"
+          "type": "string",
+          "name": "firstName"
+        },
+        {
+          "type": "string",
+          "name": "lastName"
+        },
+        {
+          "type": "string",
+          "name": "image"
+        },
+        {
+          "type": "string",
+          "name": "addressInfo"
+        },
+        {
+          "type": "string",
+          "name": "number"
         }
       ],
       "outputs": []
