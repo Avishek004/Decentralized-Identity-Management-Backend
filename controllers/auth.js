@@ -22,6 +22,12 @@ exports.signup = async (req, res) => {
       return res.status(400).send("Invalid address");
     }
 
+    // Check if the username is already taken
+    const isUsernameTaken = await UserStorage.methods.isUsernameTaken(username).call();
+    if (isUsernameTaken) {
+      return res.status(400).send("Username already taken");
+    }
+
     // Check if user is already registered
     const isRegistered = await UserStorage.methods.isRegistered(address).call();
     if (isRegistered) {
@@ -44,16 +50,18 @@ exports.signup = async (req, res) => {
     console.log("Sign up Final Hash", finalHash);
 
     const accounts = await web3.eth.getAccounts();
-    // console.log("accounts", accounts);
-    await UserStorage.methods.storeUser(address, finalHash).send({
+    await UserStorage.methods.storeUser(address, finalHash, username).send({
       from: accounts[0],
     });
 
     res.status(200).send("User registered successfully");
   } catch (error) {
     console.log(error);
+    if (error.message.includes("Username already taken")) {
+      return res.status(400).send("Username already taken");
+    }
     if (error.message.includes("User already exists")) {
-      return res.status(400).send("User Already Exists...");
+      return res.status(400).send("User already exists");
     }
     res.status(500).send("Error registering user");
   }
@@ -62,6 +70,14 @@ exports.signup = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { username, password, address, signature, nonce } = req.body;
+
+    // Recover the address from the signature
+    const recoveredAddress = web3.eth.accounts.recover(nonce, signature);
+    console.log("Recovered Address", recoveredAddress);
+
+    if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
+      return res.status(400).send("Invalid signature");
+    }
 
     // Check if the user is registered
     const isRegistered = await UserStorage.methods.isRegistered(address).call();
@@ -75,14 +91,6 @@ exports.login = async (req, res) => {
 
     if (!storedHash) {
       return res.status(404).send("User not found");
-    }
-
-    // Recover the address from the signature
-    const recoveredAddress = web3.eth.accounts.recover(nonce, signature);
-    console.log("Recovered Address", recoveredAddress);
-
-    if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
-      return res.status(400).send("Invalid signature");
     }
 
     const hash1 = web3.utils.sha3(username);

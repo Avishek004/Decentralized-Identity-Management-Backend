@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 contract UserStorage {
     struct User {
         bytes32 userHash;
+        string username;
         string firstName;
         string lastName;
         string image;
@@ -13,14 +14,20 @@ contract UserStorage {
 
     mapping(address => User) private users;
     mapping(address => bool) private registered;
+    mapping(string => bool) private usernames;
 
     function storeUser(
         address user,
-        bytes32 userHash
+        bytes32 userHash,
+        string memory username
     ) public {
         require(!registered[user], "User already exists");
+        require(!usernames[username], "Username already taken");
+
         users[user].userHash = userHash;
+        users[user].username = username;
         registered[user] = true;
+        usernames[username] = true;
     }
 
     function updateUser(
@@ -47,5 +54,9 @@ contract UserStorage {
 
     function isRegistered(address user) public view returns (bool) {
         return registered[user];
+    }
+
+    function isUsernameTaken(string memory username) public view returns (bool) {
+        return usernames[username];
     }
 }

@@ -24,6 +24,10 @@
             },
             {
               "type": "string",
+              "name": "username"
+            },
+            {
+              "type": "string",
               "name": "firstName"
             },
             {
@@ -67,6 +71,25 @@
     },
     {
       "type": "function",
+      "name": "isUsernameTaken",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [
+        {
+          "type": "string",
+          "name": "username"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "bool",
+          "name": ""
+        }
+      ]
+    },
+    {
+      "type": "function",
       "name": "storeUser",
       "constant": false,
       "payable": false,
@@ -78,6 +101,10 @@
         {
           "type": "bytes32",
           "name": "userHash"
+        },
+        {
+          "type": "string",
+          "name": "username"
         }
       ],
       "outputs": []
